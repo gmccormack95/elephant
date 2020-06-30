@@ -1,0 +1,4 @@
+enum HabitType {
+  RANDOM,
+  SCHEDULED
+}
