@@ -1,23 +1,42 @@
+import 'package:elephant/bloc/habit_bloc.dart';
+import 'package:elephant/bloc/habit_event.dart';
 import 'package:elephant/model/habit.dart';
+import 'package:elephant/model/habit_type.dart';
+import 'package:elephant/model/scheduled_notification.dart';
 import 'package:elephant/util/app_colors.dart';
-import 'package:elephant/widget/habit_switch.dart';
+import 'package:elephant/widget/schedule_alert.dart';
+import 'package:elephant/widget/schedule_card.dart';
+import 'package:elephant/widget/time_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
+import 'package:toggle_switch/toggle_switch.dart';
 
 class HabitPage extends StatefulWidget {
-  HabitPage(this.habit);
+  HabitPage(this.index);
 
-  final Habit habit;
+  final int index;
 
   @override
   _HabitPageState createState() => _HabitPageState();
 }
 
 class _HabitPageState extends State<HabitPage> {
+  var pageController = PageController();
+  var hideHabitText = false;
+  var habitTextController = TextEditingController();
+  var loads = 0;
 
-  Widget _buildSlider(double width){
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Widget _buildSlider(double width, Habit habit, BuildContext context){
     return Padding(
-      padding: const EdgeInsets.only(top: 10.0),
+      padding: const EdgeInsets.only(bottom: 20.0, top: 40.0),
       child: Stack(
         alignment: Alignment.topCenter,
         children: <Widget>[
@@ -34,37 +53,45 @@ class _HabitPageState extends State<HabitPage> {
             child: SleekCircularSlider(
               min: 0,
               max: 60,
+              initialValue: habit.frequency.toDouble(),
               innerWidget: (value){
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text(
-                      'Frequency',
-                      style: TextStyle(
-                        fontSize: 28.0,
-                        fontWeight: FontWeight.w200,
-                        color: AppColors.grey
+                return AnimatedOpacity(
+                  opacity: hideHabitText
+                    ? 1.0
+                    : 0.0,
+                  duration: Duration(milliseconds: 350),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        'Frequency',
+                        style: TextStyle(
+                          fontSize: 28.0,
+                          fontWeight: FontWeight.w200,
+                          color: AppColors.grey
+                        ),
                       ),
-                    ),
-                    Container(height: 2.0),
-                    Text(
-                      '${value.toInt()}',
-                      style: TextStyle(
-                        fontSize: 36.0,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.grey
-                      ),
-                    )
-                  ],
+                      Container(height: 2.0),
+                      Text(
+                        '${value.toInt()}',
+                        style: TextStyle(
+                          fontSize: 36.0,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.grey
+                        ),
+                      )
+                    ],
+                  ),
                 );
               },
               appearance: CircularSliderAppearance(
                 size: width - 100,
                 startAngle: 287,
                 angleRange: 325,
+                animationEnabled: false,
                 customColors: CustomSliderColors(
                   trackColor: AppColors.chart_background,
-                  progressBarColors: AppColors.habit_colors,
+                  progressBarColor: habit.color,
                   dotColor: Colors.blue,
                   hideShadow: true,
                   gradientStartAngle: -90,
@@ -74,46 +101,228 @@ class _HabitPageState extends State<HabitPage> {
                   trackWidth: 5.0,
                   progressBarWidth: 5.0,
                   handlerSize: 10.0,
-                )
+                ),
               ),
+              onChangeStart: (double value){
+                setState(() {
+                  this.hideHabitText = true;
+                });
+              },
+              onChangeEnd: (double value){
+                setState(() {
+                  this.hideHabitText = false;
+                });
+                habit.frequency = value.toInt();
+                context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+              },
               onChange: (double value) {
-            })
+
+              }
+            )
+          ),
+          AnimatedOpacity(
+            opacity: hideHabitText
+              ? 0.0
+              : 1.0,
+            duration: Duration(milliseconds: 350),
+            child: Container(
+              height: width - 100,
+              width: width - 140,
+              margin: EdgeInsets.only(top: 30),
+              alignment: Alignment.center,
+              child: TextField(
+                controller: habitTextController,
+                maxLength: 20,
+                style: TextStyle(
+                  fontSize: 32.0,
+                  fontWeight: FontWeight.w200,
+                  color: AppColors.grey,
+                ),
+                textAlign: TextAlign.center,
+                decoration: new InputDecoration(
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                ),
+                onSubmitted: (text){
+                  habit.message = text;
+                  context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+                },
+              ),
+            ),
           )
         ],
       )
     );
   }
 
-  Widget _buildActiveOption(){
+  Widget _buildTypeOption(Habit habit){
     return Padding(
-      padding: const EdgeInsets.only(top: 20.0),
+      padding: const EdgeInsets.only(bottom: 50.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(left: 10.0),
-            child: Text(
-              'Active',
-              style: TextStyle(
-                fontSize: 32.0,
-                fontWeight: FontWeight.w300,
-                color: AppColors.grey
+          Visibility(
+            visible: false,
+            child: RawMaterialButton(
+              elevation: 3.0,
+              constraints: BoxConstraints.tightFor(
+                width: 35.0,
+                height: 35.0,
               ),
+              shape: CircleBorder(),
+              fillColor: habit.color,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(
+                        'Select a color',
+                        style: TextStyle(
+                          fontSize: 22.0,
+                          fontWeight: FontWeight.w300,
+                          color: AppColors.grey
+                        ),
+                      ),
+                      content: SingleChildScrollView(
+                        child: BlockPicker(
+                          pickerColor: habit.color,
+                          onColorChanged: (color){
+                            habit.color = color;
+                            context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
-          HabitSwitch(
-            color: widget.habit.color,
-            isSelected: widget.habit.isActive,
+          ToggleSwitch(
+            minWidth: 90.0,
+            initialLabelIndex: habit.habitType == HabitType.RANDOM
+              ? 0
+              : 1,
+            activeBgColor: habit.color,
+            activeTextColor: Colors.white,
+            inactiveBgColor: Colors.grey[100],
+            inactiveTextColor: Colors.grey[900],
+            labels: ['Random', 'Scheduled'],
+            onToggle: (index) {
+              habit.habitType = habit.habitType == HabitType.RANDOM ? HabitType.SCHEDULED : HabitType.RANDOM;
+              context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+              pageController.animateToPage(index, duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+            },
           ),
         ],
       ),
     );
   }
 
+  Widget _buildHabitControls(Habit habit){
+    return Expanded(
+      child: PageView(
+        controller: pageController,
+        physics:new NeverScrollableScrollPhysics(),
+        children: <Widget>[
+          _buildRandomControls(habit),
+          _buildScheduledControls(habit),
+        ],
+      )
+    );
+  }
+
+  Widget _buildRandomControls(Habit habit){
+    return Container(
+      alignment: Alignment.topCenter,
+      padding: const EdgeInsets.only(top: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          TimerPicker(
+            startHour: habit.minHour,
+            startMinute: habit.minMin,
+            onHourSelected: (hour){
+              habit.minHour = hour;
+              context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+            },
+            onMinuteSelected: (minute){
+              habit.minMin = minute;
+              context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+            },
+          ),
+          Text(
+            '-',
+            style: TextStyle(
+              fontSize: 40.0,
+              color: AppColors.grey,
+              fontWeight: FontWeight.w200
+            ),
+          ),
+          TimerPicker(
+            startHour: habit.maxHour,
+            startMinute: habit.maxMin,
+            onHourSelected: (hour){
+              habit.maxHour = hour;
+              context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+            },
+            onMinuteSelected: (minute){
+              habit.maxMin = minute;
+              context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+            },
+          ),
+        ],
+      )
+    );
+  }
+
+  Widget _buildScheduledNotifications(Habit habit){
+    return Padding(
+      padding: const EdgeInsets.only(top: 40.0),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: habit.scheduledNotificaitons.length,
+        physics: NeverScrollableScrollPhysics(),
+        itemBuilder: (BuildContext context, int index) {
+          return ScheduleCard(
+            habit.scheduledNotificaitons[index],
+            onSelected: (){
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return ScheduleAlert(widget.index, scheduleIndex: index, schedule: habit.scheduledNotificaitons[index]);
+                },
+              );
+            },
+          );
+        }
+      ),
+    );
+  }
+
+  Widget _buildScheduledControls(Habit habit){
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Scheduled Reminders',
+          style: TextStyle(
+            fontSize: 24.0,
+            fontWeight: FontWeight.w200,
+            color: AppColors.grey
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -127,12 +336,15 @@ class _HabitPageState extends State<HabitPage> {
         backgroundColor: Colors.white,
         elevation: 5.0,
         brightness: Brightness.light,
+        centerTitle: true,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back,
             color: Colors.black,
           ),
-          onPressed:() => Navigator.pop(context, false),
+          onPressed:() {
+            Navigator.pop(context, false);
+          }
         ),
         actions: <Widget>[
           Padding(
@@ -146,15 +358,48 @@ class _HabitPageState extends State<HabitPage> {
         ],
       ),
       backgroundColor: Colors.white,
-      body: Container(
-        padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 40.0),
-        child: Column(
-          children: <Widget>[
-            _buildSlider(width),
-            _buildActiveOption()
-          ],
-        ),
-      )
+      body: BlocBuilder<HabitBloc, List<Habit>>(
+        builder: (context, habits) {
+          var habit = habits[widget.index];
+          habitTextController.text = habit.message;
+          if(loads == 0){
+            pageController = PageController(initialPage: habit.habitType == HabitType.RANDOM ? 0 : 1);
+          }
+          loads++;
+          return Container(
+            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+            child: ListView(
+              children: <Widget>[
+                _buildSlider(width, habit, context),
+                _buildRandomControls(habit),
+                _buildScheduledNotifications(habit),
+                Container(
+                  height: 80.0,
+                )
+              ],
+            )
+          );
+        }
+      ),
+      floatingActionButton: BlocBuilder<HabitBloc, List<Habit>>(
+        builder: (context, habits) {
+          return FloatingActionButton(
+            child: Icon(
+              Icons.today,
+              size: 30.0,
+            ),
+            backgroundColor: habits[widget.index].color,
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return ScheduleAlert(widget.index);
+                },
+              );
+            }
+          );
+        }
+      ),
     );
   }
 }

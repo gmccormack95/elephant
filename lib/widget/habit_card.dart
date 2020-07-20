@@ -33,21 +33,11 @@ class HabitCard extends StatelessWidget {
           style: TextStyle(
             color: AppColors.dark_blue,
             fontSize: 18.0,
-            fontWeight: FontWeight.w600
+            fontWeight: FontWeight.w400
           ),
         ),
         Container(
           height: 2.0,
-        ),
-        Text(
-          habit.habitType == HabitType.RANDOM
-            ? 'Random'
-            : 'Scheduled',
-          style: TextStyle(
-            color: AppColors.grey,
-            fontSize: 18.0,
-            fontWeight: FontWeight.w500
-          ),
         ),
         Container(
           height: 2.0,
@@ -57,7 +47,7 @@ class HabitCard extends StatelessWidget {
           style: TextStyle(
             color: AppColors.grey,
             fontSize: 18.0,
-            fontWeight: FontWeight.w500
+            fontWeight: FontWeight.w300
           ),
         ),
         Container(
@@ -68,7 +58,7 @@ class HabitCard extends StatelessWidget {
           style: TextStyle(
             color: AppColors.grey,
             fontSize: 18.0,
-            fontWeight: FontWeight.w500
+            fontWeight: FontWeight.w300
           ),
         ),
       ],
@@ -77,14 +67,17 @@ class HabitCard extends StatelessWidget {
 
   Widget _buildEdit(){
     return Expanded(
-      child: Container(
-        alignment: Alignment.bottomRight,
-        child: Text(
-          'Edit',
-          style: TextStyle(
-            color: habit.color,
-            fontSize: 18.0,
-            fontWeight: FontWeight.w500
+      child: GestureDetector(
+        onTap: onSelected,
+        child: Container(
+          alignment: Alignment.bottomRight,
+          child: Text(
+            'Edit',
+            style: TextStyle(
+              color: habit.color,
+              fontSize: 18.0,
+              fontWeight: FontWeight.w500
+            ),
           ),
         ),
       )
@@ -94,7 +87,6 @@ class HabitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onSelected,
       child: Container(
         padding: EdgeInsets.all(15.0),
         margin: EdgeInsets.only(bottom: 20.0, left: 2.0, right: 2.0),
