@@ -1,12 +1,13 @@
-import 'package:elephant/model/scheduled_notification.dart';
-import 'package:elephant/util/app_colors.dart';
-import 'package:elephant/util/uiutil.dart';
+import 'package:Elephant/model/scheduled_notification.dart';
+import 'package:Elephant/util/app_colors.dart';
+import 'package:Elephant/util/uiutil.dart';
 import 'package:flutter/material.dart';
 
 class ScheduleCard extends StatelessWidget {
-  ScheduleCard(this.schedule, {this.onSelected});
+  ScheduleCard(this.schedule, this.color, {this.onSelected});
 
   final ScheduledNotification schedule;
+  final Color color;
   final Function onSelected;
 
   Widget _buildText(){
@@ -14,8 +15,7 @@ class ScheduleCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(right: 20.0),
+        Container(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
@@ -38,8 +38,34 @@ class ScheduleCard extends StatelessWidget {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 20.0),
+        Visibility(
+          visible: schedule.frequency != null,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 20.0),
+            child: Column(
+              children: <Widget>[
+                Text(
+                  'Repeats',
+                  style: TextStyle(
+                    color: AppColors.grey,
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w400
+                  ),
+                ),
+                Text(
+                  '${schedule.frequency} times',
+                  style: TextStyle(
+                    color: AppColors.grey,
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w300
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.only(left: 20.0),
           child: Column(
             children: <Widget>[
               Text(
@@ -63,29 +89,6 @@ class ScheduleCard extends StatelessWidget {
             ]
           ),
         ),
-        Opacity(
-          opacity: schedule.frequency == null ? 0.0 : 1.0,
-          child: Column(
-            children: <Widget>[
-              Text(
-                'Frequency',
-                style: TextStyle(
-                  color: AppColors.grey,
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w400
-                ),
-              ),
-              Text(
-                '${schedule.frequency}',
-                style: TextStyle(
-                  color: AppColors.grey,
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w300
-                ),
-              ),
-            ],
-          ),
-        )
       ],
     );
   }
@@ -99,7 +102,7 @@ class ScheduleCard extends StatelessWidget {
           child: Text(
             'Edit',
             style: TextStyle(
-              color: AppColors.grey,
+              color: color,
               fontSize: 16.0,
               fontWeight: FontWeight.w400
             ),

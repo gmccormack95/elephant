@@ -1,4 +1,4 @@
-import 'package:elephant/widget/snapping_list_view.dart';
+import 'package:Elephant/widget/snapping_list_view.dart';
 import 'package:flutter/material.dart';
 import '../util/app_colors.dart';
 import '../util/uiutil.dart';

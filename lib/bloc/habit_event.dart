@@ -1,4 +1,4 @@
-import 'package:elephant/model/habit.dart';
+import 'package:Elephant/model/habit.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class HabitEvent extends Equatable {
@@ -32,12 +32,10 @@ class UpdateHabit extends HabitEvent {
 }
 
 class CreateHabit extends HabitEvent {
-  final Habit habit;
-
-  CreateHabit(this.habit);
+  CreateHabit();
 
   @override
-  List<Object> get props => [habit];
+  List<Object> get props => [];
 }
 
 class DeleteHabit extends HabitEvent {

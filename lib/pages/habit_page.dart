@@ -1,12 +1,13 @@
-import 'package:elephant/bloc/habit_bloc.dart';
-import 'package:elephant/bloc/habit_event.dart';
-import 'package:elephant/model/habit.dart';
-import 'package:elephant/model/habit_type.dart';
-import 'package:elephant/model/scheduled_notification.dart';
-import 'package:elephant/util/app_colors.dart';
-import 'package:elephant/widget/schedule_alert.dart';
-import 'package:elephant/widget/schedule_card.dart';
-import 'package:elephant/widget/time_picker.dart';
+import 'package:Elephant/bloc/habit_bloc.dart';
+import 'package:Elephant/bloc/habit_event.dart';
+import 'package:Elephant/model/habit.dart';
+import 'package:Elephant/model/habit_type.dart';
+import 'package:Elephant/model/scheduled_notification.dart';
+import 'package:Elephant/util/app_colors.dart';
+import 'package:Elephant/widget/delete_card.dart';
+import 'package:Elephant/widget/schedule_alert.dart';
+import 'package:Elephant/widget/schedule_card.dart';
+import 'package:Elephant/widget/time_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,11 +33,13 @@ class _HabitPageState extends State<HabitPage> {
   @override
   void initState() {
     super.initState();
+
+    habitTextController.selection = TextSelection.fromPosition(TextPosition(offset: habitTextController.text.length));
   }
 
   Widget _buildSlider(double width, Habit habit, BuildContext context){
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0, top: 40.0),
+      padding: const EdgeInsets.only(bottom: 20.0, top: 0.0),
       child: Stack(
         alignment: Alignment.topCenter,
         children: <Widget>[
@@ -50,7 +53,8 @@ class _HabitPageState extends State<HabitPage> {
           ),
           Padding(
             padding: const EdgeInsets.only(top: 20.0),
-            child: SleekCircularSlider(
+            child: habit.habitType == HabitType.RANDOM
+              ? SleekCircularSlider(
               min: 0,
               max: 60,
               initialValue: habit.frequency.toDouble(),
@@ -119,6 +123,60 @@ class _HabitPageState extends State<HabitPage> {
 
               }
             )
+            : SleekCircularSlider(
+              min: 0,
+              max: 60,
+              initialValue: 0,
+              innerWidget: (value){
+                return AnimatedOpacity(
+                  opacity: hideHabitText
+                    ? 1.0
+                    : 0.0,
+                  duration: Duration(milliseconds: 350),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        'Frequency',
+                        style: TextStyle(
+                          fontSize: 28.0,
+                          fontWeight: FontWeight.w200,
+                          color: AppColors.grey
+                        ),
+                      ),
+                      Container(height: 2.0),
+                      Text(
+                        '${value.toInt()}',
+                        style: TextStyle(
+                          fontSize: 36.0,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.grey
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              },
+              appearance: CircularSliderAppearance(
+                size: width - 100,
+                startAngle: 287,
+                angleRange: 325,
+                animationEnabled: false,
+                customColors: CustomSliderColors(
+                  trackColor: AppColors.chart_background,
+                  progressBarColor: AppColors.chart_background,
+                  dotColor: Colors.transparent,
+                  hideShadow: true,
+                  gradientStartAngle: -90,
+                  gradientEndAngle: 90
+                ),
+                customWidths: CustomSliderWidths(
+                  trackWidth: 5.0,
+                  progressBarWidth: 5.0,
+                  handlerSize: 10.0,
+                ),
+              ),
+            )
           ),
           AnimatedOpacity(
             opacity: hideHabitText
@@ -160,7 +218,7 @@ class _HabitPageState extends State<HabitPage> {
 
   Widget _buildTypeOption(Habit habit){
     return Padding(
-      padding: const EdgeInsets.only(bottom: 50.0),
+      padding: const EdgeInsets.only(bottom: 50.0, top: 20.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
@@ -213,9 +271,15 @@ class _HabitPageState extends State<HabitPage> {
             inactiveTextColor: Colors.grey[900],
             labels: ['Random', 'Scheduled'],
             onToggle: (index) {
-              habit.habitType = habit.habitType == HabitType.RANDOM ? HabitType.SCHEDULED : HabitType.RANDOM;
+              if(index == 0){
+                habit.habitType = HabitType.RANDOM;
+                context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+                pageController.animateToPage(index, duration: Duration(milliseconds: 350), curve: Curves.easeIn);
+              }else{
+                habit.habitType = HabitType.SCHEDULED;
               context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
-              pageController.animateToPage(index, duration: Duration(milliseconds: 300), curve: Curves.easeIn);
+              pageController.animateToPage(index, duration: Duration(milliseconds: 350), curve: Curves.easeIn);
+              }
             },
           ),
         ],
@@ -281,23 +345,33 @@ class _HabitPageState extends State<HabitPage> {
   }
 
   Widget _buildScheduledNotifications(Habit habit){
-    return Padding(
-      padding: const EdgeInsets.only(top: 40.0),
+    return Container(
+      margin: const EdgeInsets.only(top: 2.0),
       child: ListView.builder(
         shrinkWrap: true,
         itemCount: habit.scheduledNotificaitons.length,
         physics: NeverScrollableScrollPhysics(),
         itemBuilder: (BuildContext context, int index) {
-          return ScheduleCard(
-            habit.scheduledNotificaitons[index],
-            onSelected: (){
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return ScheduleAlert(widget.index, scheduleIndex: index, schedule: habit.scheduledNotificaitons[index]);
-                },
-              );
+          return Dismissible(
+            key: Key("Active_${habit.scheduledNotificaitons[index].hashCode}"),
+            direction: DismissDirection.endToStart,
+            onDismissed: (direction) {
+              habit.scheduledNotificaitons.removeAt(index);
+              context.bloc<HabitBloc>().add(UpdateHabit(habit, index));
             },
+            background: DeleteCard(),
+            child: ScheduleCard(
+              habit.scheduledNotificaitons[index],
+              habit.color,
+              onSelected: (){
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return ScheduleAlert(widget.index, scheduleIndex: index, schedule: habit.scheduledNotificaitons[index]);
+                  },
+                );
+              },
+            )
           );
         }
       ),
@@ -308,14 +382,15 @@ class _HabitPageState extends State<HabitPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
+        /*Text(
           'Scheduled Reminders',
           style: TextStyle(
             fontSize: 24.0,
             fontWeight: FontWeight.w200,
             color: AppColors.grey
           ),
-        ),
+        ),*/
+        _buildScheduledNotifications(habit)
       ],
     );
   }
@@ -337,13 +412,17 @@ class _HabitPageState extends State<HabitPage> {
         elevation: 5.0,
         brightness: Brightness.light,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-          ),
-          onPressed:() {
-            Navigator.pop(context, false);
+        leading: BlocBuilder<HabitBloc, List<Habit>>(
+          builder: (context, habits) {
+            return IconButton(
+              icon: Icon(
+                Icons.arrow_back,
+                color: Colors.black,
+              ),
+              onPressed:() {
+                Navigator.pop(context, false);
+              }
+            );
           }
         ),
         actions: <Widget>[
@@ -368,11 +447,11 @@ class _HabitPageState extends State<HabitPage> {
           loads++;
           return Container(
             padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-            child: ListView(
+            child: Column(
               children: <Widget>[
+                _buildTypeOption(habit),
                 _buildSlider(width, habit, context),
-                _buildRandomControls(habit),
-                _buildScheduledNotifications(habit),
+                _buildHabitControls(habit),
                 Container(
                   height: 80.0,
                 )
@@ -383,20 +462,28 @@ class _HabitPageState extends State<HabitPage> {
       ),
       floatingActionButton: BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
-          return FloatingActionButton(
-            child: Icon(
-              Icons.today,
-              size: 30.0,
-            ),
-            backgroundColor: habits[widget.index].color,
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return ScheduleAlert(widget.index);
-                },
-              );
-            }
+          return AnimatedOpacity(
+            opacity: habits[widget.index].habitType == HabitType.RANDOM
+              ? 0.0
+              : 1.0,
+            duration: Duration(milliseconds: 350),
+            child: FloatingActionButton(
+              child: Icon(
+                Icons.today,
+                size: 30.0,
+              ),
+              backgroundColor: habits[widget.index].color,
+              onPressed: () {
+                if(habits[widget.index].habitType == HabitType.RANDOM) return; 
+
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return ScheduleAlert(widget.index);
+                  },
+                );
+              }
+            )
           );
         }
       ),

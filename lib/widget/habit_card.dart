@@ -1,7 +1,7 @@
-import 'package:elephant/model/habit.dart';
-import 'package:elephant/model/habit_type.dart';
-import 'package:elephant/util/app_colors.dart';
-import 'package:elephant/util/uiutil.dart';
+import 'package:Elephant/model/habit.dart';
+import 'package:Elephant/model/habit_type.dart';
+import 'package:Elephant/util/app_colors.dart';
+import 'package:Elephant/util/uiutil.dart';
 import 'package:flutter/material.dart';
 
 import 'habit_switch.dart';
@@ -31,19 +31,18 @@ class HabitCard extends StatelessWidget {
         Text(
           habit.message,
           style: TextStyle(
-            color: AppColors.dark_blue,
+            color: AppColors.grey,
             fontSize: 18.0,
-            fontWeight: FontWeight.w400
+            fontWeight: FontWeight.w500
           ),
         ),
         Container(
           height: 2.0,
         ),
-        Container(
-          height: 2.0,
-        ),
         Text(
-          '${UIUtil.formatTime(habit.minHour, habit.minMin)} - ${UIUtil.formatTime(habit.maxHour, habit.maxMin)}',
+          habit.habitType == HabitType.RANDOM
+            ? 'Random'
+            : 'Scheduled',
           style: TextStyle(
             color: AppColors.grey,
             fontSize: 18.0,
@@ -53,8 +52,24 @@ class HabitCard extends StatelessWidget {
         Container(
           height: 2.0,
         ),
+        Visibility(
+          visible: habit.habitType == HabitType.RANDOM,
+          child: Text(
+            '${UIUtil.formatTime(habit.minHour, habit.minMin)} - ${UIUtil.formatTime(habit.maxHour, habit.maxMin)}',
+            style: TextStyle(
+              color: AppColors.grey,
+              fontSize: 18.0,
+              fontWeight: FontWeight.w300
+            ),
+          ),
+        ),
+        Container(
+          height: 2.0,
+        ),
         Text(
-          '${habit.frequency} notifications',
+          habit.habitType == HabitType.RANDOM
+            ? '${habit.frequency} notifications'
+            : '${habit.getTotalScheduledNotifications()} notifications',
           style: TextStyle(
             color: AppColors.grey,
             fontSize: 18.0,

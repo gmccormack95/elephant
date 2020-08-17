@@ -5,6 +5,7 @@ class AppColors {
   static final Color dark_blue = Color(0xFF0E2449);
   static final Color grey = Color(0xFF6F6F6F);
   static final Color chart_background = Color(0xFFE8ECED);
+  static final Color app_background = Color(0xFFF3F3F6);
   static final List<Color> habit_colors = [
     Color.fromRGBO(255, 145, 0, 1.0),
     Color.fromRGBO(244, 67, 54, 1.0),

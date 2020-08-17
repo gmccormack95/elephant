@@ -68,7 +68,6 @@
 				C88488C09C82B47AA2A70C57 /* Pods-Runner.release.xcconfig */,
 				5E8F2E2098958F0867221E23 /* Pods-Runner.profile.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -366,7 +365,7 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 9AF2C6C8CN;
 				ENABLE_BITCODE = NO;
-				FLUTTER_APPLICATION_PATH = /Users/georgemccormack/Documents/freelance/elephant_flutter;
+				FLUTTER_APPLICATION_PATH = /Users/gmccormack/Documents/freelance/elephant_flutter;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
@@ -378,6 +377,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
 				);
+				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nicegroup.elephant;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -503,7 +503,7 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 9AF2C6C8CN;
 				ENABLE_BITCODE = NO;
-				FLUTTER_APPLICATION_PATH = /Users/georgemccormack/Documents/freelance/elephant_flutter;
+				FLUTTER_APPLICATION_PATH = /Users/gmccormack/Documents/freelance/elephant_flutter;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
@@ -515,6 +515,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
 				);
+				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nicegroup.elephant;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -533,7 +534,7 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = 9AF2C6C8CN;
 				ENABLE_BITCODE = NO;
-				FLUTTER_APPLICATION_PATH = /Users/georgemccormack/Documents/freelance/elephant_flutter;
+				FLUTTER_APPLICATION_PATH = /Users/gmccormack/Documents/freelance/elephant_flutter;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
@@ -545,6 +546,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
 				);
+				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nicegroup.elephant;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";

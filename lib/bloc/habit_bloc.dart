@@ -1,21 +1,23 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:ui';
 import 'package:bloc/bloc.dart';
-import 'package:elephant/model/habit.dart';
-import 'package:elephant/model/habit_type.dart';
-import 'package:elephant/util/app_colors.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:Elephant/model/habit.dart';
+import 'package:Elephant/model/habit_type.dart';
+import 'package:Elephant/model/scheduled_notification.dart';
+import 'package:Elephant/util/app_colors.dart';
+import 'package:Elephant/util/habit_manager.dart';
 import 'habit_event.dart';
+import 'dart:math' as math;
 
 class HabitBloc extends Bloc<HabitEvent, List<Habit>> {
   HabitBloc() : super([]);
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
   var habits = [
-    Habit(10, 'Drink Water', 9, 17, 0, 0, true, AppColors.defaultColors[0], HabitType.RANDOM),
-    Habit(35, 'Be Mindful', 18, 22, 45, 0, false, AppColors.defaultColors[1], HabitType.SCHEDULED),
+    Habit(10, 'Drink Water', 8, 12, 0, 0, true, AppColors.defaultColors[0], HabitType.RANDOM),
+    Habit(35, 'Be Mindful', 18, 22, 45, 0, true, AppColors.defaultColors[1], HabitType.SCHEDULED, scheduledNotificaitons: [
+      ScheduledNotification(14, 15, 30, 5),
+      ScheduledNotification(16, 0, null, null),
+    ]),
     Habit(15, 'Sit up Straight', 12, 16, 0, 15, false, AppColors.defaultColors[2], HabitType.RANDOM),
   ];
 
@@ -27,6 +29,7 @@ class HabitBloc extends Bloc<HabitEvent, List<Habit>> {
 
     if(event is UpdateHabits){
       habits = List.from(event.habits);
+      HabitManager.scheduleAllHabits(habits);
       yield habits;
     }
 
@@ -34,11 +37,7 @@ class HabitBloc extends Bloc<HabitEvent, List<Habit>> {
       List<Habit> newHabits = List.from(habits);
       newHabits[event.index] = event.habit;
       habits = newHabits;
-      yield habits;
-    }
-
-    if(event is CreateHabit){
-      habits.add(event.habit);
+      HabitManager.scheduleAllHabits(habits);
       yield habits;
     }
 
@@ -48,32 +47,7 @@ class HabitBloc extends Bloc<HabitEvent, List<Habit>> {
       habits = newHabits;
       yield habits;
     }
-  }
 
-  Future<void> _scheduleNotification() async {
-    var scheduledNotificationDateTime = DateTime.now().add(Duration(seconds: 5));
-    var vibrationPattern = Int64List(4);
-    vibrationPattern[0] = 0;
-    vibrationPattern[1] = 1000;
-    vibrationPattern[2] = 5000;
-    vibrationPattern[3] = 2000;
-
-    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'elephant_reminder',
-      'Elephant Reminders',
-      'Elephant habit reminders',
-      icon: 'elephant',
-      color: Colors.blue
-    );
-    var iOSPlatformChannelSpecifics =IOSNotificationDetails();
-    var platformChannelSpecifics = NotificationDetails(
-        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.schedule(
-        0,
-        'scheduled title',
-        'scheduled body',
-        scheduledNotificationDateTime,
-        platformChannelSpecifics);
   }
 
 }

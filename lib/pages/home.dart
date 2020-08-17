@@ -1,16 +1,20 @@
-import 'package:elephant/bloc/habit_bloc.dart';
-import 'package:elephant/bloc/habit_event.dart';
-import 'package:elephant/model/habit.dart';
-import 'package:elephant/model/habit_type.dart';
-import 'package:elephant/pages/habit_page.dart';
-import 'package:elephant/util/app_colors.dart';
-import 'package:elephant/widget/habit_card.dart';
+import 'package:Elephant/bloc/habit_bloc.dart';
+import 'package:Elephant/bloc/habit_event.dart';
+import 'package:Elephant/model/habit.dart';
+import 'package:Elephant/model/habit_type.dart';
+import 'package:Elephant/pages/habit_page.dart';
+import 'package:Elephant/util/app_colors.dart';
+import 'package:Elephant/widget/delete_card.dart';
+import 'package:Elephant/widget/habit_card.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_circular_chart/flutter_circular_chart.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
-
+import 'dart:ui' as ui;
 import '../util/app_colors.dart';
+import 'settings_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -18,6 +22,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<AnimatedCircularChartState> _chartKey = GlobalKey<AnimatedCircularChartState>();
   final _chartSize = const Size(275.0, 275.0);
   List<CircularStackEntry> data = List();
@@ -27,6 +32,16 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     BlocProvider.of<HabitBloc>(context).add(LoadHabits());
+    _requestIOSPermissions();
+  }
+
+  void _requestIOSPermissions() {
+    FlutterLocalNotificationsPlugin().resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.
+      requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+    );
   }
 
   _generateData(List<Habit> habits){
@@ -34,12 +49,23 @@ class _HomePageState extends State<HomePage> {
     totalHabits = 0;
     for(Habit habit in habits){
       if(habit.isActive){
-        var stackEntry = CircularStackEntry([
-          CircularSegmentEntry((habit.frequency/60) * 100, habit.color),
-          CircularSegmentEntry(100 - ((habit.frequency/60) * 100), AppColors.chart_background)
-        ]);
-        totalHabits = totalHabits + habit.frequency;
-        data.add(stackEntry);
+        var habitTotal = habit.habitType == HabitType.RANDOM ? habit.frequency : habit.getTotalScheduledNotifications();
+        
+        if(totalHabits + habitTotal <= 60){
+          var stackEntry = CircularStackEntry([
+            CircularSegmentEntry((habitTotal/60) * 102, habit.color),
+            CircularSegmentEntry(100 - ((habitTotal/60) * 100), AppColors.chart_background)
+          ]);
+          data.add(stackEntry);
+          totalHabits = totalHabits + habitTotal;
+        }else{
+          var stackEntry = CircularStackEntry([
+            CircularSegmentEntry(((60 - totalHabits)/60) * 102, habit.color),
+            CircularSegmentEntry(100 - (((60 - totalHabits)/60) * 100), AppColors.chart_background)
+          ]);
+          data.add(stackEntry);
+          totalHabits = 60;
+        }
       }      
     }
 
@@ -54,6 +80,19 @@ class _HomePageState extends State<HomePage> {
   _updateUI(List<Habit> habits){
     _generateData(habits);
     if(_chartKey.currentState != null) _chartKey.currentState.updateData(data);
+  }
+
+  _isMaxNotificaitons(List<Habit> habits){
+    var total = 0;
+
+    for(Habit habit in habits){
+      if(habit.isActive){
+        var habitTotal = habit.habitType == HabitType.RANDOM ? habit.frequency : habit.getTotalScheduledNotifications();
+        total = total + habitTotal;
+      }
+    }
+
+    return total >= 60;    
   }
 
   Widget _buildTotalChart(double width){
@@ -120,8 +159,16 @@ class _HomePageState extends State<HomePage> {
   Widget _buildActiveList(List<Habit> habits){
     return SliverList(
       delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
-          if(habits[index].isActive){
-            return HabitCard(
+        if(habits[index].isActive){
+          return Dismissible(
+            direction: DismissDirection.endToStart,
+            key: Key("Active_${habits[index].hashCode}"),
+            onDismissed: (direction) {
+              habits.removeAt(index);
+              context.bloc<HabitBloc>().add(UpdateHabits(habits));
+            },
+            background: DeleteCard(),
+            child: HabitCard(
               habit: habits[index],
               onSelected: (){
                 Navigator.push(
@@ -133,12 +180,13 @@ class _HomePageState extends State<HomePage> {
                 habits[index].isActive = false;
                 context.bloc<HabitBloc>().add(UpdateHabits(habits));
               }
-            );
-          }else{
-            return Container();
-          }
-        },
-        childCount: habits.length,
+            )
+          );
+        }else{
+          return Container();
+        }
+      },
+      childCount: habits.length,
       ),
     );
   }
@@ -153,18 +201,40 @@ class _HomePageState extends State<HomePage> {
             );
           }
           if(!habits[index].isActive){
-            return HabitCard(
-              habit: habits[index],
-              onSelected: (){
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HabitPage(index)),
-                );
-              },
-              onSwitchHabit: () {
-                habits[index].isActive = true;
+            return Dismissible(
+              direction: DismissDirection.endToStart,
+              key: Key("Inactive_${habits[index].hashCode}"),
+              onDismissed: (direction) {
+                habits.removeAt(index);
                 context.bloc<HabitBloc>().add(UpdateHabits(habits));
-              }
+              },
+              background: DeleteCard(),
+              child: HabitCard(
+                habit: habits[index],
+                onSelected: (){
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HabitPage(index)),
+                  );
+                },
+                onSwitchHabit: (){
+                  habits[index].isActive = true;
+                  context.bloc<HabitBloc>().add(UpdateHabits(habits));
+                  if(_isMaxNotificaitons(habits)){
+                    scaffoldKey.currentState.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "You’ve reached the max number of habits.",
+                          style: TextStyle(
+                            color: Colors.white
+                          ),
+                        ),
+                        backgroundColor: Colors.blue,
+                      )
+                    );
+                  }
+                }
+              )
             );
           }else{
             return Container();
@@ -192,16 +262,25 @@ class _HomePageState extends State<HomePage> {
         brightness: Brightness.light,
         centerTitle: true,
         actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Image.asset(
-              'assets/images/settings.png',
-              height: 25.0,
-              width: 25.0,
-            ),
+          GestureDetector(
+            onTap: (){
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 15.0),
+              child: Image.asset(
+                'assets/images/settings.png',
+                height: 25.0,
+                width: 25.0,
+              ),
+            )
           )
         ],
       ),
+      key: scaffoldKey,
       backgroundColor: Colors.white,
       body: BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
@@ -274,20 +353,51 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
-          return FloatingActionButton(
-            child: Icon(
-              Icons.add,
-              size: 35.0,
-            ),
-            backgroundColor: AppColors.grey,
-            onPressed: () {
-              habits.add(Habit(10, 'New Habit', 17, 21, 0, 0, false, AppColors.defaultColors[(habits.length)%AppColors.defaultColors.length], HabitType.RANDOM));
-              context.bloc<HabitBloc>().add(UpdateHabits(habits));
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HabitPage(habits.length - 1)),
-              );
-            },
+          return Material(
+            type: MaterialType.transparency,
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: AppColors.habit_colors,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(1000.0),
+                onTap: () {
+                  habits.add(Habit(10, 'New Habit', 17, 21, 0, 0, false, Habit.getUnusedColor(habits), HabitType.RANDOM));
+                  context.bloc<HabitBloc>().add(UpdateHabits(habits));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HabitPage(habits.length - 1)),
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.all(2.5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  padding:EdgeInsets.all(10.0),
+                  child: ShaderMask(
+                    blendMode: BlendMode.srcIn,
+                    shaderCallback: (Rect rect) {
+                      return LinearGradient(
+                        colors: AppColors.habit_colors,
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter
+                      ).createShader(Rect.fromLTRB(0, 0, rect.width, rect.height));
+                    },
+                    child: Icon(
+                      Icons.add,
+                      size: 30.0,
+                    )
+                  ),
+                ),
+              ),
+            )
           );
         }
       ),

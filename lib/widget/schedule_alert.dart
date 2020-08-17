@@ -1,8 +1,8 @@
-import 'package:elephant/bloc/habit_bloc.dart';
-import 'package:elephant/bloc/habit_event.dart';
-import 'package:elephant/model/habit.dart';
-import 'package:elephant/model/scheduled_notification.dart';
-import 'package:elephant/util/app_colors.dart';
+import 'package:Elephant/bloc/habit_bloc.dart';
+import 'package:Elephant/bloc/habit_event.dart';
+import 'package:Elephant/model/habit.dart';
+import 'package:Elephant/model/scheduled_notification.dart';
+import 'package:Elephant/util/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'time_picker.dart';
@@ -122,6 +122,72 @@ class _ScheduleAlertState extends State<ScheduleAlert> {
                     child: DropdownButton<int>(
                       items: [
                         DropdownMenuItem(
+                          value: 1,
+                          child: Text("1 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 2,
+                          child: Text("2 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 3,
+                          child: Text("3 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 4,
+                          child: Text("4 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 5,
+                          child: Text("5 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 6,
+                          child: Text("6 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 7,
+                          child: Text("7 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 8,
+                          child: Text("8 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 9,
+                          child: Text("9 times"),
+                        ),
+                        DropdownMenuItem(
+                          value: 10,
+                          child: Text("10 times"),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          frequency = value;
+                        });
+                      },
+                      hint: Text("... times"),
+                      value: frequency,
+                    ),
+                  ),
+                ),
+                AnimatedOpacity(
+                  opacity: shouldRepeat ? 1.0 : 0.3,
+                  duration: Duration(milliseconds: 350),
+                  child: IgnorePointer(
+                    ignoring: !shouldRepeat,
+                    child: DropdownButton<int>(
+                      items: [
+                        DropdownMenuItem(
+                          value: 5,
+                          child: Text("Every 5 minutes"),
+                        ),
+                        DropdownMenuItem(
+                          value: 10,
+                          child: Text("Every 10 minutes"),
+                        ),
+                        DropdownMenuItem(
                           value: 15,
                           child: Text("Every 15 minutes"),
                         ),
@@ -141,64 +207,6 @@ class _ScheduleAlertState extends State<ScheduleAlert> {
                       },
                       hint: Text("Every..."),
                       value: repeat,
-                    ),
-                  ),
-                ),
-                AnimatedOpacity(
-                  opacity: shouldRepeat ? 1.0 : 0.3,
-                  duration: Duration(milliseconds: 350),
-                  child: IgnorePointer(
-                    ignoring: !shouldRepeat,
-                    child: DropdownButton<int>(
-                      items: [
-                        DropdownMenuItem(
-                          value: 1,
-                          child: Text("1"),
-                        ),
-                        DropdownMenuItem(
-                          value: 2,
-                          child: Text("2"),
-                        ),
-                        DropdownMenuItem(
-                          value: 3,
-                          child: Text("3"),
-                        ),
-                        DropdownMenuItem(
-                          value: 4,
-                          child: Text("4"),
-                        ),
-                        DropdownMenuItem(
-                          value: 5,
-                          child: Text("5"),
-                        ),
-                        DropdownMenuItem(
-                          value: 6,
-                          child: Text("6"),
-                        ),
-                        DropdownMenuItem(
-                          value: 7,
-                          child: Text("7"),
-                        ),
-                        DropdownMenuItem(
-                          value: 8,
-                          child: Text("8"),
-                        ),
-                        DropdownMenuItem(
-                          value: 9,
-                          child: Text("9"),
-                        ),
-                        DropdownMenuItem(
-                          value: 10,
-                          child: Text("10"),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          frequency = value;
-                        });
-                      },
-                      hint: Text("Frequency"),
-                      value: frequency,
                     ),
                   ),
                 ),
