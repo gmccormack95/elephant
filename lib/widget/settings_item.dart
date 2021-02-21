@@ -16,7 +16,7 @@ class SettingsItem extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 30.0),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.only(right: 5.0),

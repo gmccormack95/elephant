@@ -2,8 +2,9 @@ import 'package:Elephant/bloc/habit_bloc.dart';
 import 'package:Elephant/bloc/habit_event.dart';
 import 'package:Elephant/model/habit.dart';
 import 'package:Elephant/model/habit_type.dart';
-import 'package:Elephant/model/scheduled_notification.dart';
+import 'package:Elephant/model/settings_constants.dart';
 import 'package:Elephant/util/app_colors.dart';
+import 'package:Elephant/util/settings.dart';
 import 'package:Elephant/widget/delete_card.dart';
 import 'package:Elephant/widget/schedule_alert.dart';
 import 'package:Elephant/widget/schedule_card.dart';
@@ -16,9 +17,10 @@ import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
 class HabitPage extends StatefulWidget {
-  HabitPage(this.index);
+  HabitPage(this.index, this.homeScrollController);
 
   final int index;
+  final ScrollController homeScrollController;
 
   @override
   _HabitPageState createState() => _HabitPageState();
@@ -266,9 +268,9 @@ class _HabitPageState extends State<HabitPage> {
               ? 0
               : 1,
             activeBgColor: habit.color,
-            activeTextColor: Colors.white,
+            activeFgColor: Colors.white,
             inactiveBgColor: Colors.grey[100],
-            inactiveTextColor: Colors.grey[900],
+            inactiveFgColor: Colors.grey[900],
             labels: ['Random', 'Scheduled'],
             onToggle: (index) {
               if(index == 0){
@@ -277,8 +279,8 @@ class _HabitPageState extends State<HabitPage> {
                 pageController.animateToPage(index, duration: Duration(milliseconds: 350), curve: Curves.easeIn);
               }else{
                 habit.habitType = HabitType.SCHEDULED;
-              context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
-              pageController.animateToPage(index, duration: Duration(milliseconds: 350), curve: Curves.easeIn);
+                context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+                pageController.animateToPage(index, duration: Duration(milliseconds: 350), curve: Curves.easeIn);
               }
             },
           ),
@@ -382,14 +384,6 @@ class _HabitPageState extends State<HabitPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        /*Text(
-          'Scheduled Reminders',
-          style: TextStyle(
-            fontSize: 24.0,
-            fontWeight: FontWeight.w200,
-            color: AppColors.grey
-          ),
-        ),*/
         _buildScheduledNotifications(habit)
       ],
     );
@@ -420,6 +414,7 @@ class _HabitPageState extends State<HabitPage> {
                 color: Colors.black,
               ),
               onPressed:() {
+                widget.homeScrollController.jumpTo(0);
                 Navigator.pop(context, false);
               }
             );
@@ -452,9 +447,6 @@ class _HabitPageState extends State<HabitPage> {
                 _buildTypeOption(habit),
                 _buildSlider(width, habit, context),
                 _buildHabitControls(habit),
-                Container(
-                  height: 80.0,
-                )
               ],
             )
           );
@@ -467,22 +459,25 @@ class _HabitPageState extends State<HabitPage> {
               ? 0.0
               : 1.0,
             duration: Duration(milliseconds: 350),
-            child: FloatingActionButton(
-              child: Icon(
-                Icons.today,
-                size: 30.0,
-              ),
-              backgroundColor: habits[widget.index].color,
-              onPressed: () {
-                if(habits[widget.index].habitType == HabitType.RANDOM) return; 
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 45),
+              child: FloatingActionButton(
+                child: Icon(
+                  Icons.today,
+                  size: 30.0,
+                ),
+                backgroundColor: habits[widget.index].color,
+                onPressed: () {
+                  if(habits[widget.index].habitType == HabitType.RANDOM) return; 
 
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return ScheduleAlert(widget.index);
-                  },
-                );
-              }
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return ScheduleAlert(widget.index);
+                    },
+                  );
+                }
+              ),
             )
           );
         }

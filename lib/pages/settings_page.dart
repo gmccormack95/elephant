@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:Elephant/util/app_colors.dart';
+import 'package:Elephant/util/mailchimp_manager.dart';
 import 'package:Elephant/widget/settings_item.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -11,6 +13,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  TextEditingController subscribeTextFieldController = TextEditingController();
 
   final Uri _emailLaunchUri = Uri(
     scheme: 'mailto',
@@ -41,6 +44,41 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _showSubscribe(BuildContext context) async {
+  return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Enter email to subscribe'),
+          content: TextField(
+            controller: subscribeTextFieldController,
+            decoration: InputDecoration(hintText: "Email"),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              textColor: AppColors.grey,
+              child: Text('CANCEL'),
+              onPressed: () {
+                setState(() {
+                  Navigator.pop(context);
+                });
+              },
+            ),
+            FlatButton(
+              textColor: AppColors.grey,
+              child: Text('OK'),
+              onPressed: () async {
+                Response response = await MailchimpManager.subscribeEmail(subscribeTextFieldController.text);
+                String body = response.body;
+                Navigator.pop(context);
+                subscribeTextFieldController.text = "";
+              },
+            ),
+          ],
+        );
+      });
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,23 +104,15 @@ class _SettingsPageState extends State<SettingsPage> {
             Navigator.pop(context, false);
           }
         ),
-        actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Image.asset(
-              'assets/images/settings.png',
-              height: 25.0,
-              width: 25.0,
-            ),
-          )
-        ],
       ),
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: Container(
+        child: ListView(
           children: <Widget>[
+            Container(
+              width: double.infinity,
+              height: 60.0
+            ),
             SettingsItem(
               image: Image.asset(
                 'assets/images/unlock.png',
@@ -148,6 +178,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   color: AppColors.grey
                 ),
               ),
+              onTap: () => _showSubscribe(context),
             ),
             SettingsItem(
               image: Image.asset(

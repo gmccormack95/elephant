@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
+import 'package:Elephant/model/settings_constants.dart';
+import 'package:Elephant/util/settings.dart';
 import 'package:bloc/bloc.dart';
 import 'package:Elephant/model/habit.dart';
 import 'package:Elephant/model/habit_type.dart';
@@ -10,16 +13,9 @@ import 'habit_event.dart';
 import 'dart:math' as math;
 
 class HabitBloc extends Bloc<HabitEvent, List<Habit>> {
-  HabitBloc() : super([]);
+  HabitBloc(this.habits) : super([]);
 
-  var habits = [
-    Habit(10, 'Drink Water', 8, 12, 0, 0, true, AppColors.defaultColors[0], HabitType.RANDOM),
-    Habit(35, 'Be Mindful', 18, 22, 45, 0, true, AppColors.defaultColors[1], HabitType.SCHEDULED, scheduledNotificaitons: [
-      ScheduledNotification(14, 15, 30, 5),
-      ScheduledNotification(16, 0, null, null),
-    ]),
-    Habit(15, 'Sit up Straight', 12, 16, 0, 15, false, AppColors.defaultColors[2], HabitType.RANDOM),
-  ];
+  List<Habit> habits;
 
   @override
   Stream<List<Habit>> mapEventToState(HabitEvent event) async* {
@@ -48,6 +44,12 @@ class HabitBloc extends Bloc<HabitEvent, List<Habit>> {
       yield habits;
     }
 
+    _storeHabitsInPrefs();
+  }
+
+  _storeHabitsInPrefs() {
+    var json = jsonEncode(habits.map((e) => e.toJson()).toList());
+    ElephantSettings.setString(SETTINGS_HABITS, json);
   }
 
 }

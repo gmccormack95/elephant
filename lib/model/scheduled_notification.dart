@@ -21,4 +21,19 @@ class ScheduledNotification extends Equatable{
     repeat,
     frequency
   ];
+
+  ScheduledNotification.fromJson(Map<String, dynamic> json)
+    : hour =  json['hour'],
+      min = json['min'],
+      repeat = json['repeat'],
+      frequency = json['frequency'];
+
+  Map<String, dynamic> toJson() =>
+  {
+    'hour': hour,
+    'min': min,
+    'repeat': repeat,
+    'frequency': frequency,
+  }; 
+  
 }

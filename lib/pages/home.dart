@@ -2,10 +2,14 @@ import 'package:Elephant/bloc/habit_bloc.dart';
 import 'package:Elephant/bloc/habit_event.dart';
 import 'package:Elephant/model/habit.dart';
 import 'package:Elephant/model/habit_type.dart';
+import 'package:Elephant/model/settings_constants.dart';
 import 'package:Elephant/pages/habit_page.dart';
+import 'package:Elephant/util/ad_manager.dart';
 import 'package:Elephant/util/app_colors.dart';
+import 'package:Elephant/util/settings.dart';
 import 'package:Elephant/widget/delete_card.dart';
 import 'package:Elephant/widget/habit_card.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,6 +29,8 @@ class _HomePageState extends State<HomePage> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<AnimatedCircularChartState> _chartKey = GlobalKey<AnimatedCircularChartState>();
   final _chartSize = const Size(275.0, 275.0);
+  final scrollController = ScrollController();
+  BannerAd _bannerAd;
   List<CircularStackEntry> data = List();
   int totalHabits = 0;
 
@@ -33,6 +39,36 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     BlocProvider.of<HabitBloc>(context).add(LoadHabits());
     _requestIOSPermissions();
+    _initAds();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  _initAds() async {
+    await _initAdMob();
+    _bannerAd = BannerAd(
+        adUnitId: AdManager.bannerAdUnitId,
+        size: AdSize.banner,
+    );
+    _loadBannerAd();
+  }
+
+  Future<void> _initAdMob() async {
+    if(await ElephantSettings.getBolean(SETTINGS_SHOW_ADS, true)){
+      return FirebaseAdMob.instance.initialize(appId: AdManager.appId);
+    }
+    
+    return null;
+  }
+
+  void _loadBannerAd() {
+    _bannerAd
+      ..load()
+      ..show(anchorType: AnchorType.bottom);
   }
 
   void _requestIOSPermissions() {
@@ -151,6 +187,18 @@ class _HomePageState extends State<HomePage> {
               percentageValues: true,
             ),
           ),
+          Container(
+            margin: EdgeInsets.only(top: 60.0),
+            child: Text(
+              '$totalHabits / 60',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24.0,
+                fontWeight: FontWeight.w300,
+                color: AppColors.grey
+              ),
+            ),
+          )
         ],
       )
     );
@@ -173,7 +221,7 @@ class _HomePageState extends State<HomePage> {
               onSelected: (){
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HabitPage(index)),
+                  MaterialPageRoute(builder: (context) => HabitPage(index, scrollController)),
                 );
               },
               onSwitchHabit: (){
@@ -214,7 +262,7 @@ class _HomePageState extends State<HomePage> {
                 onSelected: (){
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => HabitPage(index)),
+                    MaterialPageRoute(builder: (context) => HabitPage(index, scrollController))
                   );
                 },
                 onSwitchHabit: (){
@@ -288,9 +336,10 @@ class _HomePageState extends State<HomePage> {
           return Container(
             padding: const EdgeInsets.only(left: 20.0, right: 20.0),
             child: CustomScrollView(
+              controller: scrollController,
               slivers: <Widget>[
                 SliverPadding(
-                  padding: const EdgeInsets.only(bottom: 4.0, top: 20.0),
+                  padding: const EdgeInsets.only(top: 20.0),
                   sliver: SliverToBoxAdapter(
                     child: Text(
                       'Total Habits',
@@ -303,7 +352,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                SliverPadding(
+                /*SliverPadding(
                   padding: const EdgeInsets.only(left: 4.0),
                   sliver: SliverToBoxAdapter(
                     child: Text(
@@ -316,7 +365,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                ),
+                ),*/
                 _buildTotalChart(275),
                 SliverPadding(
                   padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
@@ -353,51 +402,54 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
-          return Material(
-            type: MaterialType.transparency,
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: AppColors.habit_colors,
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(1000.0),
-                onTap: () {
-                  habits.add(Habit(10, 'New Habit', 17, 21, 0, 0, false, Habit.getUnusedColor(habits), HabitType.RANDOM));
-                  context.bloc<HabitBloc>().add(UpdateHabits(habits));
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => HabitPage(habits.length - 1)),
-                  );
-                },
-                child: Container(
-                  margin: const EdgeInsets.all(2.5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 45.0),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: AppColors.habit_colors,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
-                  padding:EdgeInsets.all(10.0),
-                  child: ShaderMask(
-                    blendMode: BlendMode.srcIn,
-                    shaderCallback: (Rect rect) {
-                      return LinearGradient(
-                        colors: AppColors.habit_colors,
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter
-                      ).createShader(Rect.fromLTRB(0, 0, rect.width, rect.height));
-                    },
-                    child: Icon(
-                      Icons.add,
-                      size: 30.0,
-                    )
+                  shape: BoxShape.circle,
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(1000.0),
+                  onTap: () {
+                    habits.add(Habit(10, 'New Habit', 17, 21, 0, 0, false, Habit.getUnusedColor(habits), HabitType.RANDOM));
+                    context.bloc<HabitBloc>().add(UpdateHabits(habits));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => HabitPage(habits.length - 1, scrollController))
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(2.5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    padding:EdgeInsets.all(10.0),
+                    child: ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (Rect rect) {
+                        return LinearGradient(
+                          colors: AppColors.habit_colors,
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter
+                        ).createShader(Rect.fromLTRB(0, 0, rect.width, rect.height));
+                      },
+                      child: Icon(
+                        Icons.add,
+                        size: 30.0,
+                      )
+                    ),
                   ),
                 ),
-              ),
-            )
+              )
+            ),
           );
         }
       ),
