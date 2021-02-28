@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:Elephant/model/elephant_dart.dart';
 import 'package:Elephant/model/habit.dart';
 import 'package:Elephant/model/habit_type.dart';
 import 'package:Elephant/model/scheduled_notification.dart';
@@ -34,8 +35,8 @@ class HabitManager {
       if(habit.isActive) await _scheduleHabit(habit);
     }
 
-    var asd = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-    print(asd.length);
+    var notifications = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    print(notifications.length);
   }
 
   static _scheduleHabit(Habit habit) async {
@@ -72,20 +73,6 @@ class HabitManager {
     return times;
   }
 
-  static List<Time> _getScheduledTimes(ScheduledNotification schedule){
-    var times = List<Time>();
-    var minuteInterval = schedule.repeat;
-    var secondsInterval = minuteInterval * 60;
-    var dateTime = DateTime(0, 0, 0, schedule.hour, schedule.min);
-
-    for(int i=0; i < schedule.frequency; i++){
-      times.add(Time(dateTime.hour, dateTime.minute));
-      dateTime = dateTime.add(Duration(seconds: secondsInterval.toInt()));
-    }
-
-    return times;
-  }
-
   static int _randomMinute(Habit habit){
     Random random = new Random();
     var hourDiff = (habit.maxHour - habit.minHour);
@@ -99,14 +86,21 @@ class HabitManager {
 
   static _scheduleScheduled(Habit habit) async {
     for(ScheduledNotification schedule in habit.scheduledNotificaitons){
-      if(schedule.frequency != null){
-        var times = _getScheduledTimes(schedule);
-
-        for(Time time in times){
-          await _scheduleNotification(time, habit);
+      var dayCount = 1;
+      for(ElephantDay day in habit.days){
+        if(day.selected){
+          //resets sunday to 1
+          if(dayCount == 7) dayCount = 1;
+           await flutterLocalNotificationsPlugin.showWeeklyAtDayAndTime(
+              id,
+              habit.message,
+              null,
+              Day(dayCount + 1),
+              Time(schedule.hour == 24 ? 0 : schedule.hour, schedule.min),
+              NotificationDetails(androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics)
+            );
         }
-      }else{
-        await _scheduleNotification(Time(schedule.hour, schedule.min), habit);
+        dayCount++;
       }
     }
   }

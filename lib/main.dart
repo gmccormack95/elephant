@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'model/elephant_dart.dart';
 import 'model/habit.dart';
 import 'model/habit_type.dart';
 import 'model/scheduled_notification.dart';
@@ -47,12 +48,12 @@ Future<List<Habit>> getHabits() async {
 
   if(jsonString == null){
     return [
-      Habit(10, 'Drink Water', 8, 12, 0, 0, true, AppColors.defaultColors[0], HabitType.RANDOM),
-      Habit(35, 'Be Mindful', 18, 22, 45, 0, true, AppColors.defaultColors[1], HabitType.SCHEDULED, scheduledNotificaitons: [
-        ScheduledNotification(14, 15, 30, 5),
-        ScheduledNotification(16, 0, null, null),
+      Habit(10, 'Drink Water', 8, 12, 0, 0, true, AppColors.defaultColors[0], HabitType.RANDOM, Habit.defaultDays),
+      Habit(35, 'Be Mindful', 18, 22, 45, 0, true, AppColors.defaultColors[1], HabitType.SCHEDULED, Habit.defaultDays, scheduledNotificaitons: [
+        ScheduledNotification(14, 15),
+        ScheduledNotification(16, 0),
       ]),
-      Habit(15, 'Sit up Straight', 12, 16, 0, 15, false, AppColors.defaultColors[2], HabitType.RANDOM),
+      Habit(15, 'Sit up Straight', 12, 16, 0, 15, false, AppColors.defaultColors[2], HabitType.RANDOM, Habit.defaultDays),
     ];
   }
 

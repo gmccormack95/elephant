@@ -9,6 +9,7 @@ import 'package:Elephant/util/app_colors.dart';
 import 'package:Elephant/util/settings.dart';
 import 'package:Elephant/widget/delete_card.dart';
 import 'package:Elephant/widget/habit_card.dart';
+import 'package:app_review/app_review.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +43,7 @@ class _HomePageState extends State<HomePage> {
     BlocProvider.of<HabitBloc>(context).add(LoadHabits());
     _requestIOSPermissions();
     _initAds();
+    _initReview();
   }
 
   @override
@@ -49,6 +51,16 @@ class _HomePageState extends State<HomePage> {
     _bannerAd?.dispose();
     _interstitialAd.dispose();
     super.dispose();
+  }
+
+  _initReview() async {
+    int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, 0);
+
+    if(loadCount % 10 == 3){
+      AppReview.requestReview.then((onValue) {
+        print(onValue);
+      });
+    }
   }
 
   _initAds() async {
@@ -374,20 +386,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                /*SliverPadding(
-                  padding: const EdgeInsets.only(left: 4.0),
-                  sliver: SliverToBoxAdapter(
-                    child: Text(
-                      '$totalHabits / 60',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 24.0,
-                        fontWeight: FontWeight.w300,
-                        color: AppColors.grey
-                      ),
-                    ),
-                  ),
-                ),*/
                 _buildTotalChart(275),
                 SliverPadding(
                   padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
@@ -440,7 +438,7 @@ class _HomePageState extends State<HomePage> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(1000.0),
                   onTap: () {
-                    habits.add(Habit(10, 'New Habit', 17, 21, 0, 0, false, Habit.getUnusedColor(habits), HabitType.RANDOM));
+                    habits.add(Habit(10, 'New Habit', 17, 21, 0, 0, false, Habit.getUnusedColor(habits), HabitType.RANDOM, Habit.defaultDays));
                     context.bloc<HabitBloc>().add(UpdateHabits(habits));
                     Navigator.push(
                       context,

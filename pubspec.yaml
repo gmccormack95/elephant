@@ -14,7 +14,7 @@ description: Habit application
 version: 0.2.0+1
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.2.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -32,6 +32,7 @@ dependencies:
   firebase_admob: ^0.11.0+1
   http: ^0.12.2
   get: ^3.25.4
+  app_review: ^2.0.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

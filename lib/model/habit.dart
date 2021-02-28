@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:Elephant/main.dart';
+import 'package:Elephant/model/elephant_dart.dart';
 import 'package:Elephant/model/habit_type.dart';
 import 'package:Elephant/model/scheduled_notification.dart';
 import 'package:Elephant/util/app_colors.dart';
@@ -18,6 +20,7 @@ class Habit extends Equatable{
     this.isActive,
     this.color,
     this.habitType,
+    this.days,
     {this.scheduledNotificaitons : const []}
   ) : 
   super();
@@ -31,6 +34,7 @@ class Habit extends Equatable{
   bool isActive;
   Color color;
   HabitType habitType;
+  List<ElephantDay> days;
   List<ScheduledNotification> scheduledNotificaitons;
 
   @override
@@ -43,22 +47,23 @@ class Habit extends Equatable{
     maxMin,
     isActive,
     color,
+    days,
     habitType
   ];
 
   int getTotalScheduledNotifications(){
-    int total = 0;
-
-    for(ScheduledNotification scheduledNotificaiton in scheduledNotificaitons){
-      if(scheduledNotificaiton.frequency == null){
-        total++;
-      }else{
-        total = total + scheduledNotificaiton.frequency;
-      }
-    }
-
-    return total;
+    return scheduledNotificaitons.length;
   }
+
+  static var defaultDays = [
+    ElephantDay('M', false),
+    ElephantDay('T', false),
+    ElephantDay('W', false),
+    ElephantDay('T', false),
+    ElephantDay('F', false),
+    ElephantDay('S', false),
+    ElephantDay('S', false),
+  ];
 
   static Color getUnusedColor(List<Habit> habits){
     for(Color color in AppColors.habit_colors){
@@ -84,6 +89,11 @@ class Habit extends Equatable{
     return List<ScheduledNotification>.from(l.map((model)=> ScheduledNotification.fromJson(model)));
   }
 
+  static List<ElephantDay> getDays(String jsonString){
+    Iterable l = json.decode(jsonString);
+    return List<ElephantDay>.from(l.map((model)=> ElephantDay.fromJson(model)));
+  }
+
   Habit.fromJson(Map<String, dynamic> json)
     : frequency =  json['frequency'],
       message = json['message'],
@@ -94,6 +104,7 @@ class Habit extends Equatable{
       isActive = json['isActive'],
       color = fromHex(json['color']),
       habitType = json['habitType'] == 'HabitType.RANDOM' ? HabitType.RANDOM : HabitType.SCHEDULED,
+      days = getDays(json['days']),
       scheduledNotificaitons = getScheduledNotifications(json['scheduledNotificaitons']);
 
   Map<String, dynamic> toJson() =>
@@ -107,6 +118,7 @@ class Habit extends Equatable{
     'isActive': isActive,
     'color': '${color.value.toRadixString(16)}',
     'habitType': habitType.toString(),
+    'days': jsonEncode(days.map((e) => e.toJson()).toList()),
     'scheduledNotificaitons': jsonEncode(scheduledNotificaitons.map((e) => e.toJson()).toList())
   }; 
 

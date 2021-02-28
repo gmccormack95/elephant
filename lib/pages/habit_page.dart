@@ -1,10 +1,14 @@
 import 'package:Elephant/bloc/habit_bloc.dart';
 import 'package:Elephant/bloc/habit_event.dart';
+import 'package:Elephant/model/elephant_dart.dart';
 import 'package:Elephant/model/habit.dart';
 import 'package:Elephant/model/habit_type.dart';
+import 'package:Elephant/model/scheduled_notification.dart';
 import 'package:Elephant/model/settings_constants.dart';
+import 'package:Elephant/pages/day_selector.dart';
 import 'package:Elephant/util/app_colors.dart';
 import 'package:Elephant/util/settings.dart';
+import 'package:Elephant/util/uiutil.dart';
 import 'package:Elephant/widget/delete_card.dart';
 import 'package:Elephant/widget/schedule_alert.dart';
 import 'package:Elephant/widget/schedule_card.dart';
@@ -195,15 +199,13 @@ class _HabitPageState extends State<HabitPage> {
                 controller: habitTextController,
                 onChanged: (text){
                   if(text.length >= 20){
-                    Future.delayed(Duration(seconds: 3), () {
+                    Future.delayed(Duration(seconds: 2), () {
                       setState(() {
                         this.hideCharacterLimited = true;
                       });
-
-                      setState(() {
-                        this.hideCharacterLimited = false;
-                      });
                     });
+
+                    setState(() { this.hideCharacterLimited = false; });
                   }
                 },
                 maxLength: 20,
@@ -318,7 +320,7 @@ class _HabitPageState extends State<HabitPage> {
   Widget _buildHabitControls(Habit habit){
     return Flexible(
       child: Container(
-        height: 400,
+        height: habit.habitType == HabitType.RANDOM ? 300 : 600,
         child: PageView(
         controller: pageController,
         physics:new NeverScrollableScrollPhysics(),
@@ -377,35 +379,94 @@ class _HabitPageState extends State<HabitPage> {
 
   Widget _buildScheduledNotifications(Habit habit){
     return Container(
-      margin: const EdgeInsets.only(top: 2.0),
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: habit.scheduledNotificaitons.length,
-        physics: NeverScrollableScrollPhysics(),
-        itemBuilder: (BuildContext context, int index) {
-          return Dismissible(
-            key: Key("Active_${habit.scheduledNotificaitons[index].hashCode}"),
-            direction: DismissDirection.endToStart,
-            onDismissed: (direction) {
-              habit.scheduledNotificaitons.removeAt(index);
-              context.bloc<HabitBloc>().add(UpdateHabit(habit, index));
-            },
-            background: DeleteCard(),
-            child: ScheduleCard(
-              habit.scheduledNotificaitons[index],
-              habit.color,
-              onSelected: (){
+      margin: EdgeInsets.only(top: habit.scheduledNotificaitons.length == 0 ? 0 : 30.0),
+      child: GridView.count(
+          crossAxisCount: 3,
+          childAspectRatio: 1.0,
+          padding: const EdgeInsets.all(4.0),
+          mainAxisSpacing: 4.0,
+          crossAxisSpacing: 4.0,
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          children: habit.scheduledNotificaitons.map((ScheduledNotification notification) {
+            return GestureDetector(
+              onTap: (){
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return ScheduleAlert(widget.index, scheduleIndex: index, schedule: habit.scheduledNotificaitons[index]);
+                    return ScheduleAlert(widget.index, schedule: notification, scheduleIndex: habit.scheduledNotificaitons.indexOf(notification));
                   },
                 );
               },
-            )
-          );
-        }
+              child: GridTile(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: habit.color,
+                    borderRadius: BorderRadius.circular(12.0)
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${UIUtil.formatHour(notification.hour)}:${UIUtil.formatMin(notification.min)}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.0
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList()),
+    );
+  }
+
+  Widget _buildAddScheduledNotifcation(Habit habit){
+    return Container(
+      margin: EdgeInsets.only(top: habit.scheduledNotificaitons.length == 0 ? 0 : 40.0),
+      alignment: Alignment.center,
+      child: Material(
+        type: MaterialType.transparency, 
+        child: Ink(
+          decoration: BoxDecoration(
+            border: Border.all(color: habit.color, width: 3.0),
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(1000.0),
+            onTap: (){
+              if(habit.habitType == HabitType.RANDOM) return; 
+
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return ScheduleAlert(widget.index);
+                },
+              );
+            },
+            child: Padding(
+              padding:EdgeInsets.all(10.0),
+              child: Icon(
+                Icons.add,
+                size: 30.0,
+                color: habit.color,
+              ),
+            ),
+          ),
+        )
       ),
+    );
+  }
+
+  Widget _buildDaySelector(Habit habit){
+    return DaySelector(
+      habit.color,
+      habit.days,
+      onTap: (dayIndex){
+        setState(() { 
+          habit.days[dayIndex].selected = !habit.days[dayIndex].selected;
+          context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+        });
+      },
     );
   }
 
@@ -413,7 +474,9 @@ class _HabitPageState extends State<HabitPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _buildScheduledNotifications(habit)
+        _buildDaySelector(habit),
+        _buildScheduledNotifications(habit),
+        _buildAddScheduledNotifcation(habit)
       ],
     );
   }
@@ -469,36 +532,6 @@ class _HabitPageState extends State<HabitPage> {
                 _buildSlider(width, habit, context),
                 _buildHabitControls(habit),
               ],
-            )
-          );
-        }
-      ),
-      floatingActionButton: BlocBuilder<HabitBloc, List<Habit>>(
-        builder: (context, habits) {
-          return AnimatedOpacity(
-            opacity: habits[widget.index].habitType == HabitType.RANDOM
-              ? 0.0
-              : 1.0,
-            duration: Duration(milliseconds: 350),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 55),
-              child: FloatingActionButton(
-                child: Icon(
-                  Icons.today,
-                  size: 30.0,
-                ),
-                backgroundColor: habits[widget.index].color,
-                onPressed: () {
-                  if(habits[widget.index].habitType == HabitType.RANDOM) return; 
-
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return ScheduleAlert(widget.index);
-                    },
-                  );
-                }
-              ),
             )
           );
         }

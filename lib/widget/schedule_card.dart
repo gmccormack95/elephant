@@ -3,7 +3,7 @@ import 'package:Elephant/util/app_colors.dart';
 import 'package:Elephant/util/uiutil.dart';
 import 'package:flutter/material.dart';
 
-class ScheduleCard extends StatelessWidget {
+/*class ScheduleCard extends StatelessWidget {
   ScheduleCard(this.schedule, this.color, {this.onSelected});
 
   final ScheduledNotification schedule;
@@ -138,3 +138,4 @@ class ScheduleCard extends StatelessWidget {
     );
   }
 }
+*/
