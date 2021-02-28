@@ -23,4 +23,15 @@ class ElephantSettings {
     return prefs.getString(key);
   }
 
+  static setInt(String key, int value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(key, value);
+  }
+
+  static Future<int> getInt(String key, int fallback) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int result = prefs.getInt(key);
+    return result != null ? result : fallback;
+  }
+
 }

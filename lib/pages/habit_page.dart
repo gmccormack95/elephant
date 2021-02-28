@@ -29,6 +29,7 @@ class HabitPage extends StatefulWidget {
 class _HabitPageState extends State<HabitPage> {
   var pageController = PageController();
   var hideHabitText = false;
+  var hideCharacterLimited = true;
   var habitTextController = TextEditingController();
   var loads = 0;
 
@@ -192,6 +193,19 @@ class _HabitPageState extends State<HabitPage> {
               alignment: Alignment.center,
               child: TextField(
                 controller: habitTextController,
+                onChanged: (text){
+                  if(text.length >= 20){
+                    Future.delayed(Duration(seconds: 3), () {
+                      setState(() {
+                        this.hideCharacterLimited = true;
+                      });
+
+                      setState(() {
+                        this.hideCharacterLimited = false;
+                      });
+                    });
+                  }
+                },
                 maxLength: 20,
                 style: TextStyle(
                   fontSize: 32.0,
@@ -209,6 +223,18 @@ class _HabitPageState extends State<HabitPage> {
                 onSubmitted: (text){
                   habit.message = text;
                   context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+                },
+                buildCounter: (BuildContext context, { int currentLength, int maxLength, bool isFocused }) {
+                  return AnimatedOpacity(
+                    opacity: hideCharacterLimited ? 0 : 1.0, 
+                    duration: Duration(milliseconds: 300),
+                    child: Text(
+                      '20 character max limit',
+                      style: TextStyle(
+                        color: Colors.red
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
@@ -290,14 +316,17 @@ class _HabitPageState extends State<HabitPage> {
   }
 
   Widget _buildHabitControls(Habit habit){
-    return Expanded(
-      child: PageView(
+    return Flexible(
+      child: Container(
+        height: 400,
+        child: PageView(
         controller: pageController,
         physics:new NeverScrollableScrollPhysics(),
         children: <Widget>[
           _buildRandomControls(habit),
           _buildScheduledControls(habit),
         ],
+      )
       )
     );
   }
@@ -420,16 +449,6 @@ class _HabitPageState extends State<HabitPage> {
             );
           }
         ),
-        actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(right: 15.0),
-            child: Image.asset(
-              'assets/images/settings.png',
-              height: 25.0,
-              width: 25.0,
-            ),
-          )
-        ],
       ),
       backgroundColor: Colors.white,
       body: BlocBuilder<HabitBloc, List<Habit>>(
@@ -440,9 +459,11 @@ class _HabitPageState extends State<HabitPage> {
             pageController = PageController(initialPage: habit.habitType == HabitType.RANDOM ? 0 : 1);
           }
           loads++;
-          return Container(
+          return SingleChildScrollView(
+            physics: ClampingScrollPhysics(),
             padding: const EdgeInsets.only(left: 20.0, right: 20.0),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 _buildTypeOption(habit),
                 _buildSlider(width, habit, context),
@@ -460,7 +481,7 @@ class _HabitPageState extends State<HabitPage> {
               : 1.0,
             duration: Duration(milliseconds: 350),
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 45),
+              padding: const EdgeInsets.only(bottom: 55),
               child: FloatingActionButton(
                 child: Icon(
                   Icons.today,

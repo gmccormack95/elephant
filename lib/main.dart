@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:Elephant/bloc/habit_bloc.dart';
 import 'package:Elephant/util/settings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
 import 'model/habit.dart';
 import 'model/habit_type.dart';
 import 'model/scheduled_notification.dart';
@@ -23,6 +25,9 @@ void main() async {
   notificationAppLaunchDetails = await HabitManager.flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
   //bool showIntro = await ElephantSettings.getBolean(SETTINGS_INTRO_SHOWN, false);
   bool showIntro = true;
+
+  int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, -1);
+  ElephantSettings.setInt(SETTINGS_LOAD_COUNT, loadCount + 1);
 
   var habits = await getHabits();
 
@@ -63,9 +68,14 @@ class Elephant extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      
     return BlocProvider(
       create: (BuildContext context) => HabitBloc(habits),
-      child: MaterialApp(
+      child: GetMaterialApp(
         title: 'Elephant',
         debugShowCheckedModeBanner: false,
         home: showIntro 

@@ -87,7 +87,7 @@ class _IntroductionPageState extends State<IntroductionPage> {
       globalBackgroundColor: Colors.white,
       onDone: () {
         ElephantSettings.setBolean(SETTINGS_INTRO_SHOWN, true);
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage()),
         );

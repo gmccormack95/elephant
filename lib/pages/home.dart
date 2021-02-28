@@ -19,6 +19,7 @@ import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'dart:ui' as ui;
 import '../util/app_colors.dart';
 import 'settings_page.dart';
+import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -31,6 +32,7 @@ class _HomePageState extends State<HomePage> {
   final _chartSize = const Size(275.0, 275.0);
   final scrollController = ScrollController();
   BannerAd _bannerAd;
+  InterstitialAd _interstitialAd;
   List<CircularStackEntry> data = List();
   int totalHabits = 0;
 
@@ -45,6 +47,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _bannerAd?.dispose();
+    _interstitialAd.dispose();
     super.dispose();
   }
 
@@ -54,7 +57,13 @@ class _HomePageState extends State<HomePage> {
         adUnitId: AdManager.bannerAdUnitId,
         size: AdSize.banner,
     );
+
+    _interstitialAd = InterstitialAd(
+      adUnitId: InterstitialAd.testAdUnitId
+    );
+
     _loadBannerAd();
+    _loadInterstitialAd();
   }
 
   Future<void> _initAdMob() async {
@@ -65,10 +74,28 @@ class _HomePageState extends State<HomePage> {
     return null;
   }
 
-  void _loadBannerAd() {
-    _bannerAd
+  void _loadBannerAd() async {
+    bool showAds = await ElephantSettings.getBolean(SETTINGS_SHOW_ADS, true);
+    if(showAds){
+      _bannerAd
       ..load()
       ..show(anchorType: AnchorType.bottom);
+    }
+  }
+
+  void _loadInterstitialAd() async {
+    int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, 0);
+    bool showAds = await ElephantSettings.getBolean(SETTINGS_SHOW_ADS, true);
+
+    if(loadCount % 5 == 0 && showAds){
+      _interstitialAd
+      ..load()
+      ..show(
+        anchorType: AnchorType.bottom,
+        anchorOffset: 0.0,
+        horizontalCenterOffset: 0.0,
+      );
+    }
   }
 
   void _requestIOSPermissions() {
@@ -269,16 +296,11 @@ class _HomePageState extends State<HomePage> {
                   habits[index].isActive = true;
                   context.bloc<HabitBloc>().add(UpdateHabits(habits));
                   if(_isMaxNotificaitons(habits)){
-                    scaffoldKey.currentState.showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "You’ve reached the max number of habits.",
-                          style: TextStyle(
-                            color: Colors.white
-                          ),
-                        ),
-                        backgroundColor: Colors.blue,
-                      )
+                    Get.snackbar(
+                      'Max Habits',
+                      'You’ve reached the max number of habits.',
+                      backgroundColor: Colors.blue,
+                      colorText: Colors.white,
                     );
                   }
                 }
@@ -403,7 +425,7 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 45.0),
+            padding: const EdgeInsets.only(bottom: 55.0),
             child: Material(
               type: MaterialType.transparency,
               child: Ink(

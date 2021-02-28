@@ -120,7 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 width: 30.0,
               ),
               text: Text(
-                'Unlock Full Version',
+                'Get Ad-Free Version',
                 style: TextStyle(
                   fontSize: 30.0,
                   fontWeight: FontWeight.w200,
@@ -147,6 +147,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               onTap: () => _launchURL('https://www.youtube.com/watch?v=ykT7fV5QlyQ'),
+            ),
+            SettingsItem(
+              image: Image.asset(
+                'assets/images/faq.png',
+                height: 30.0,
+                width: 30.0,
+              ),
+              text: Text(
+                'FAQs',
+                style: TextStyle(
+                  fontSize: 30.0,
+                  fontWeight: FontWeight.w200,
+                  color: AppColors.grey
+                ),
+              ),
+              onTap: () => _launchURL('http://elephantapp.com/faq/apps-not-sending-reminders-can-i'),
             ),
             SettingsItem(
               image: Image.asset(
