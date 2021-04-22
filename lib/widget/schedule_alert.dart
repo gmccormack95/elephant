@@ -8,11 +8,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'time_picker.dart';
 
 class ScheduleAlert extends StatefulWidget {
-  ScheduleAlert(this.index, {this.scheduleIndex, this.schedule});
+  ScheduleAlert(this.index, {this.scheduleIndex});
 
   final int index;
   final int scheduleIndex;
-  final ScheduledNotification schedule;
 
   @override
   _ScheduleAlertState createState() => _ScheduleAlertState();
@@ -34,6 +33,8 @@ class _ScheduleAlertState extends State<ScheduleAlert> {
     return BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
           var habit = habits[widget.index];
+          ScheduledNotification schedule;
+          if(widget.scheduleIndex != null) schedule = habit.scheduledNotificaitons[widget.scheduleIndex];
 
           return AlertDialog(
             title: Text(
@@ -51,8 +52,8 @@ class _ScheduleAlertState extends State<ScheduleAlert> {
               children: <Widget>[
                 Center(
                   child: TimerPicker(
-                    startHour: habit.maxHour,
-                    startMinute: habit.maxMin,
+                    startHour: schedule != null ? schedule.hour : scheduledHour,
+                    startMinute: schedule != null ? schedule.min : scheduledMin,
                     onHourSelected: (hour){
                       setState(() {
                         this.scheduledHour = hour;
@@ -70,7 +71,7 @@ class _ScheduleAlertState extends State<ScheduleAlert> {
             ),
             actions: <Widget>[
               Visibility(
-                visible: widget.scheduleIndex != null && widget.schedule != null,
+                visible: widget.scheduleIndex != null,
                 child: FlatButton(
                   child: Text(
                     'Delete',
@@ -87,17 +88,6 @@ class _ScheduleAlertState extends State<ScheduleAlert> {
                     Navigator.of(context).pop();
                   },
                 ),
-              ),
-              FlatButton(
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: AppColors.grey
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
               ),
               AnimatedOpacity(
                 opacity: 1.0,
@@ -117,7 +107,7 @@ class _ScheduleAlertState extends State<ScheduleAlert> {
                       if(widget.scheduleIndex == null){
                         list.add(ScheduledNotification(scheduledHour, scheduledMin));
                       }else{
-                        list.remove(widget.scheduleIndex);
+                        list.removeAt(widget.scheduleIndex);
                         list.insert(widget.scheduleIndex, ScheduledNotification(scheduledHour, scheduledMin));
                       }
                       
@@ -127,6 +117,17 @@ class _ScheduleAlertState extends State<ScheduleAlert> {
                     },
                   ),
                 ),
+              ),
+              FlatButton(
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: AppColors.grey
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
               ),
             ],
           );

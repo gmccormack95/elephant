@@ -68,8 +68,8 @@ class HabitCard extends StatelessWidget {
         ),
         Text(
           habit.habitType == HabitType.RANDOM
-            ? '${habit.frequency} notifications'
-            : '${habit.getTotalScheduledNotifications()} notifications',
+            ? '${habit.frequency} reminders'
+            : '${habit.getTotalScheduledNotifications()} reminders',
           style: TextStyle(
             color: AppColors.grey,
             fontSize: 18.0,

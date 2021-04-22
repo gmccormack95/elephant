@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'model/elephant_dart.dart';
 import 'model/habit.dart';
 import 'model/habit_type.dart';
@@ -14,6 +15,7 @@ import 'model/scheduled_notification.dart';
 import 'model/settings_constants.dart';
 import 'pages/home.dart';
 import 'pages/intro_page.dart';
+import 'util/ad_manager.dart';
 import 'util/app_colors.dart';
 import 'util/habit_manager.dart';
 import 'widget/remove_glow.dart';
@@ -27,7 +29,7 @@ void main() async {
   //bool showIntro = await ElephantSettings.getBolean(SETTINGS_INTRO_SHOWN, false);
   bool showIntro = true;
 
-  int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, -1);
+  int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, 0);
   ElephantSettings.setInt(SETTINGS_LOAD_COUNT, loadCount + 1);
 
   var habits = await getHabits();
@@ -38,8 +40,12 @@ void main() async {
       requestBadgePermission: false,
       requestSoundPermission: false);
   var initializationSettings = InitializationSettings(
-      initializationSettingsAndroid, initializationSettingsIOS);
+      android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
   await HabitManager.flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  WidgetsFlutterBinding.ensureInitialized();
+  AdManager.initalize();
+
   runApp(Elephant(showIntro, habits));
 }
 

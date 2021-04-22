@@ -1,22 +1,22 @@
 import 'package:Elephant/bloc/habit_bloc.dart';
 import 'package:Elephant/bloc/habit_event.dart';
-import 'package:Elephant/model/elephant_dart.dart';
 import 'package:Elephant/model/habit.dart';
 import 'package:Elephant/model/habit_type.dart';
 import 'package:Elephant/model/scheduled_notification.dart';
 import 'package:Elephant/model/settings_constants.dart';
 import 'package:Elephant/pages/day_selector.dart';
+import 'package:Elephant/util/ad_manager.dart';
 import 'package:Elephant/util/app_colors.dart';
 import 'package:Elephant/util/settings.dart';
 import 'package:Elephant/util/uiutil.dart';
-import 'package:Elephant/widget/delete_card.dart';
 import 'package:Elephant/widget/schedule_alert.dart';
-import 'package:Elephant/widget/schedule_card.dart';
 import 'package:Elephant/widget/time_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
@@ -36,15 +36,33 @@ class _HabitPageState extends State<HabitPage> {
   var hideCharacterLimited = true;
   var habitTextController = TextEditingController();
   var loads = 0;
+    bool showAds = true;
 
   @override
   void initState() {
     super.initState();
-
+    _initAds();
     habitTextController.selection = TextSelection.fromPosition(TextPosition(offset: habitTextController.text.length));
   }
 
-  Widget _buildSlider(double width, Habit habit, BuildContext context){
+  _initAds() async {
+    showAds = await ElephantSettings.getBolean(SETTINGS_SHOW_ADS, true);
+  }
+
+  _isMaxNotificaitons(List<Habit> habits){
+    var total = 0;
+
+    for(Habit habit in habits){
+      if(habit.isActive){
+        var habitTotal = habit.habitType == HabitType.RANDOM ? habit.frequency : habit.getTotalScheduledNotifications();
+        total = total + habitTotal;
+      }
+    }
+
+    return total >= 60;    
+  }
+
+  Widget _buildSlider(double width, List<Habit> habits, Habit habit, BuildContext context){
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0, top: 0.0),
       child: Stack(
@@ -125,6 +143,14 @@ class _HabitPageState extends State<HabitPage> {
                 });
                 habit.frequency = value.toInt();
                 context.bloc<HabitBloc>().add(UpdateHabit(habit, widget.index));
+                if(_isMaxNotificaitons(habits)){
+                    Get.snackbar(
+                      'Max Habits',
+                      'You’ve reached the max number of habits.',
+                      backgroundColor: Colors.blue,
+                      colorText: Colors.white,
+                    );
+                  }
               },
               onChange: (double value) {
 
@@ -394,7 +420,7 @@ class _HabitPageState extends State<HabitPage> {
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return ScheduleAlert(widget.index, schedule: notification, scheduleIndex: habit.scheduledNotificaitons.indexOf(notification));
+                    return ScheduleAlert(widget.index, scheduleIndex: habit.scheduledNotificaitons.indexOf(notification));
                   },
                 );
               },
@@ -487,11 +513,11 @@ class _HabitPageState extends State<HabitPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Elephant',
+          'Elephant App',
           style: TextStyle(
             color: AppColors.grey,
             fontSize: 24.0,
-            fontWeight: FontWeight.w300
+            fontWeight: FontWeight.bold
           ),
         ),
         backgroundColor: Colors.white,
@@ -514,6 +540,13 @@ class _HabitPageState extends State<HabitPage> {
         ),
       ),
       backgroundColor: Colors.white,
+      bottomNavigationBar: Container(
+        height: showAds ? 50 : 0,
+        child: AdWidget(
+          key: UniqueKey(),
+          ad: AdManager.createBannerAd()..load()
+        )
+      ),
       body: BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
           var habit = habits[widget.index];
@@ -529,7 +562,7 @@ class _HabitPageState extends State<HabitPage> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 _buildTypeOption(habit),
-                _buildSlider(width, habit, context),
+                _buildSlider(width, habits, habit, context),
                 _buildHabitControls(habit),
               ],
             )

@@ -21,8 +21,8 @@ class HabitManager {
     'Elephant Reminders',
     'Elephant habit reminders',
     icon: 'elephant',
-    importance: Importance.Max, 
-    priority: Priority.High,
+    importance: Importance.max, 
+    priority: Priority.high,
     vibrationPattern: vibrationPattern
   );
   static var iOSPlatformChannelSpecifics = IOSNotificationDetails();
@@ -97,7 +97,7 @@ class HabitManager {
               null,
               Day(dayCount + 1),
               Time(schedule.hour == 24 ? 0 : schedule.hour, schedule.min),
-              NotificationDetails(androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics)
+              NotificationDetails(android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics)
             );
         }
         dayCount++;
@@ -112,7 +112,7 @@ class HabitManager {
       habit.message,
       null,
       time,
-      NotificationDetails(androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics)
+      NotificationDetails(android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics)
     );
 
     id++;

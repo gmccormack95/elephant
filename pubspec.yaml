@@ -20,19 +20,20 @@ dependencies:
   flutter:
     sdk: flutter
   sleek_circular_slider: ^1.1.0
-  flutter_circular_chart: ^0.1.0
+  flutter_circular_chart_two: ^0.1.2
   equatable: ^1.1.0
   toggle_switch: ^0.1.4
   flutter_colorpicker: ^0.3.4
   flutter_bloc: ^5.0.1
-  flutter_local_notifications: ^1.4.4+2
-  url_launcher: ^5.5.0
+  flutter_local_notifications: ^5.0.0+1
+  url_launcher: ^6.0.3
   introduction_screen: ^1.0.7
-  shared_preferences: ^0.5.12+4
-  firebase_admob: ^0.11.0+1
+  shared_preferences: ^2.0.5
+  google_mobile_ads: ^0.12.1+1
   http: ^0.12.2
   get: ^3.25.4
-  app_review: ^2.0.1
+  # app_review: ^2.0.1
+  share: ^0.6.5+4
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -5,6 +5,7 @@ import 'package:Elephant/util/mailchimp_manager.dart';
 import 'package:Elephant/widget/settings_item.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -84,11 +85,11 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Elephant',
+          'Elephant App',
           style: TextStyle(
             color: AppColors.grey,
             fontSize: 24.0,
-            fontWeight: FontWeight.w300
+            fontWeight: FontWeight.bold
           ),
         ),
         backgroundColor: Colors.white,
@@ -107,7 +108,9 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       backgroundColor: Colors.white,
       body: Container(
+        padding: const EdgeInsets.only(left: 10.0, right: 10.0),
         child: ListView(
+          physics: ClampingScrollPhysics(),
           children: <Widget>[
             Container(
               width: double.infinity,
@@ -147,6 +150,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               onTap: () => _launchURL('https://www.youtube.com/watch?v=ykT7fV5QlyQ'),
+            ),
+            SettingsItem(
+              image: Image.asset(
+                'assets/images/Referal.png',
+                height: 30.0,
+                width: 30.0,
+              ),
+              text: Text(
+                'Refer a friend',
+                style: TextStyle(
+                  fontSize: 30.0,
+                  fontWeight: FontWeight.w200,
+                  color: AppColors.grey
+                ),
+              ),
+              onTap: () => Share.share('I found this free habit-reminder app called Elephant, and I think you’ll love it! ' + (Platform.isIOS ? 'https://apps.apple.com/us/app/elephant-never-forget-build/id1196992227?ls=1' : 'https://play.google.com/store/apps/details?id=com.nicebusiness.elephant')),
             ),
             SettingsItem(
               image: Image.asset(

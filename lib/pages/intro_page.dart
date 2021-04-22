@@ -1,4 +1,5 @@
 import 'package:Elephant/model/settings_constants.dart';
+import 'package:Elephant/util/ad_manager.dart';
 import 'package:Elephant/util/app_colors.dart';
 import 'package:Elephant/util/settings.dart';
 import 'package:flutter/material.dart';
@@ -79,6 +80,12 @@ class _IntroductionPageState extends State<IntroductionPage> {
       ),
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+  }
 
   @override
   Widget build(BuildContext context) {

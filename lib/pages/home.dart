@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:Elephant/bloc/habit_bloc.dart';
 import 'package:Elephant/bloc/habit_event.dart';
 import 'package:Elephant/model/habit.dart';
@@ -9,15 +11,16 @@ import 'package:Elephant/util/app_colors.dart';
 import 'package:Elephant/util/settings.dart';
 import 'package:Elephant/widget/delete_card.dart';
 import 'package:Elephant/widget/habit_card.dart';
-import 'package:app_review/app_review.dart';
-import 'package:firebase_admob/firebase_admob.dart';
+//import 'package:app_review/app_review.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_circular_chart/flutter_circular_chart.dart';
+import 'package:flutter_circular_chart_two/flutter_circular_chart_two.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'dart:ui' as ui;
+import '../util/ad_manager.dart';
 import '../util/app_colors.dart';
 import 'settings_page.dart';
 import 'package:get/get.dart';
@@ -32,81 +35,39 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<AnimatedCircularChartState> _chartKey = GlobalKey<AnimatedCircularChartState>();
   final _chartSize = const Size(275.0, 275.0);
   final scrollController = ScrollController();
-  BannerAd _bannerAd;
-  InterstitialAd _interstitialAd;
-  List<CircularStackEntry> data = List();
+  List<CircularStackEntry> data = [];
   int totalHabits = 0;
+  bool showAds = true;
 
   @override
   void initState() {
     super.initState();
     BlocProvider.of<HabitBloc>(context).add(LoadHabits());
     _requestIOSPermissions();
-    _initAds();
     _initReview();
+    _initAds();
   }
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
-    _interstitialAd.dispose();
     super.dispose();
   }
 
-  _initReview() async {
-    int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, 0);
-
-    if(loadCount % 10 == 3){
-      AppReview.requestReview.then((onValue) {
-        print(onValue);
-      });
-    }
-  }
-
   _initAds() async {
-    await _initAdMob();
-    _bannerAd = BannerAd(
-        adUnitId: AdManager.bannerAdUnitId,
-        size: AdSize.banner,
-    );
+    showAds = await ElephantSettings.getBolean(SETTINGS_SHOW_ADS, true);
+    int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, 1);
 
-    _interstitialAd = InterstitialAd(
-      adUnitId: InterstitialAd.testAdUnitId
-    );
-
-    _loadBannerAd();
-    _loadInterstitialAd();
-  }
-
-  Future<void> _initAdMob() async {
-    if(await ElephantSettings.getBolean(SETTINGS_SHOW_ADS, true)){
-      return FirebaseAdMob.instance.initialize(appId: AdManager.appId);
-    }
-    
-    return null;
-  }
-
-  void _loadBannerAd() async {
-    bool showAds = await ElephantSettings.getBolean(SETTINGS_SHOW_ADS, true);
-    if(showAds){
-      _bannerAd
-      ..load()
-      ..show(anchorType: AnchorType.bottom);
+    if(showAds && loadCount % 3 == 3){
+      AdManager.showInterstitailAd();
     }
   }
 
-  void _loadInterstitialAd() async {
-    int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, 0);
-    bool showAds = await ElephantSettings.getBolean(SETTINGS_SHOW_ADS, true);
+  _initReview() async {
+    int loadCount = await ElephantSettings.getInt(SETTINGS_LOAD_COUNT, 1);
 
-    if(loadCount % 5 == 0 && showAds){
-      _interstitialAd
-      ..load()
-      ..show(
-        anchorType: AnchorType.bottom,
-        anchorOffset: 0.0,
-        horizontalCenterOffset: 0.0,
-      );
+    if(loadCount == 10){
+      /*AppReview.requestReview.then((onValue) {
+      });*/
     }
   }
 
@@ -226,15 +187,18 @@ class _HomePageState extends State<HomePage> {
               percentageValues: true,
             ),
           ),
-          Container(
-            margin: EdgeInsets.only(top: 60.0),
-            child: Text(
-              '$totalHabits / 60',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24.0,
-                fontWeight: FontWeight.w300,
-                color: AppColors.grey
+          Visibility(
+            visible: Platform.isIOS,
+            child: Container(
+              margin: EdgeInsets.only(top: 60.0),
+              child: Text(
+                '$totalHabits / 60',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.w300,
+                  color: AppColors.grey
+                ),
               ),
             ),
           )
@@ -332,11 +296,11 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Elephant',
+          'Elephant App',
           style: TextStyle(
             color: AppColors.grey,
             fontSize: 24.0,
-            fontWeight: FontWeight.w300
+            fontWeight: FontWeight.bold
           ),
         ),
         backgroundColor: Colors.white,
@@ -367,63 +331,77 @@ class _HomePageState extends State<HomePage> {
       body: BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
           _updateUI(habits);
-          return Container(
-            padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-            child: CustomScrollView(
-              controller: scrollController,
-              slivers: <Widget>[
-                SliverPadding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  sliver: SliverToBoxAdapter(
-                    child: Text(
-                      'Total Habits',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 32.0,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.grey
+          return Stack(
+            children: [
+              Container(
+                padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                child: CustomScrollView(
+                  controller: scrollController,
+                  slivers: <Widget>[
+                    SliverPadding(
+                      padding: const EdgeInsets.only(top: 20.0),
+                      sliver: SliverToBoxAdapter(
+                        child: Text(
+                          'Total Habits',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 32.0,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.grey
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                _buildTotalChart(275),
-                SliverPadding(
-                  padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
-                  sliver: SliverToBoxAdapter(
-                    child: Text(
-                      'Active',
-                      style: TextStyle(
-                        fontSize: 32.0,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.grey
+                    _buildTotalChart(275),
+                    SliverPadding(
+                      padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
+                      sliver: SliverToBoxAdapter(
+                        child: Text(
+                          'Active',
+                          style: TextStyle(
+                            fontSize: 32.0,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.grey
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                _buildActiveList(habits),
-                SliverPadding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
-                  sliver: SliverToBoxAdapter(
-                    child: Text(
-                      'Inactive',
-                      style: TextStyle(
-                        fontSize: 32.0,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.grey
+                    _buildActiveList(habits),
+                    SliverPadding(
+                      padding: const EdgeInsets.only(bottom: 20.0),
+                      sliver: SliverToBoxAdapter(
+                        child: Text(
+                          'Inactive',
+                          style: TextStyle(
+                            fontSize: 32.0,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.grey
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    _buildInactiveList(habits),
+                  ],
                 ),
-                _buildInactiveList(habits)
-              ],
-            ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  height: showAds ? 50 : 0,
+                  child: AdWidget(
+                    key: UniqueKey(),
+                    ad: AdManager.createBannerAd()..load()
+                  )
+                ),
+              )
+            ],
           );
         }
       ),
       floatingActionButton: BlocBuilder<HabitBloc, List<Habit>>(
         builder: (context, habits) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 55.0),
+            padding: showAds ? EdgeInsets.only(bottom: 50.0) : EdgeInsets.only(bottom: 0.0),
             child: Material(
               type: MaterialType.transparency,
               child: Ink(
