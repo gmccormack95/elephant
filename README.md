@@ -1,16 +1,7 @@
-# elephant
+# Elephant
 
-A new Flutter project.
+Elephant is the free app that helps you practice new habits by sending you gentle randomly timed reminders throughout your day. Initially a native iOS and Android application this is a work in progress Flutter development on the initial app hoping to be released this year.
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+[Native Android app page](https://play.google.com/store/apps/details?id=com.nicebusiness.elephant&hl=en&gl=US)
+[Native iOS app page](https://apps.apple.com/us/app/elephant-app-habit-reminder/id1196992227)
